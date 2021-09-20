@@ -1,0 +1,208 @@
+[extension_name]
+Donation Alerts
+[insert_external]
+<div><p>Donation Alerts is installed</div></p>
+<!--
+ * @name: Donation Alerts, @version: 1.1, @author: Fyiden#2222
+ * -->
+<script src='https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.1/socket.io.js' type='text/javascript'></script>
+<script src='https://cdnjs.cloudflare.com/ajax/libs/money.js/0.0.1/money.min.js' type='text/javascript'></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+[insert_command]
+lioranboardclient.send('{"type":"MESSAGE","topic":"ExtensionCommand","name":"Donation Alerts","boxcount":3,"boxname1":"DonationAlertsToken","boxtype1":"string", "boxname2":"base_currency","boxtype2":"string", "boxname3":"convert_currency","boxtype3":"boolean"}');
+
+[insert_hook]
+case "DonationAlerts":{
+	LBDonationAlerts (LioranBoardJSON.DonationAlertsToken, LioranBoardJSON.base_currency, LioranBoardJSON.convert_currency)
+}break
+
+[insert_script]
+function LBDonationAlerts(DonationAlertsToken = '', base_currency = '', convert_currency) {
+
+            //Socket token 
+            const socketToken = "RC8nnBfO8eYK7VD9e50E";
+            //Connect to socket
+            const socket = io(`wss://socket.donationalerts.ru:443`);
+            console.log("CONNECTING")
+            //Listen to donation events
+            socket.on('connect', () => {
+                socket.emit('add-user', { token: socketToken, type: 'minor' });
+                console.log("connected")
+            });
+
+if(base_currency == '' || base_currency == null)
+base_currency = 'RUB';
+
+            socket.on('donation', async (data) => {
+
+
+                // parse data just in case 
+                const parsedData = JSON.parse(data);
+                console.log(parsedData)
+
+                const alertType = parsedData.alert_type;
+                // console.log(alertType)
+
+                if (alertType != 1 && alertType != '1') return;
+                // base currency
+
+
+
+                // If data is not empty
+                if (parsedData.amount > 0) {
+                    let donation_amount = parsedData.amount;
+
+                    if (convert_currency == true || convert_currency == 'true') {
+                        // get latest currency rates from an API 
+                        const response = await axios.get(`https://fyiden.com/rates?value=${ parsedData.amount }&from=${ parsedData.currency }&to=${ base_currency }`)
+
+                        // console.log(response.status)
+                        if (response.status != 200 && response.status != "200") return;
+                        // data with currency rates
+                        donation_amount = response.data.value;
+                        console.log(donation_amount)
+                    }
+
+                    donation_name = parsedData.username;
+                    donation_currency = parsedData.currency;
+                    donation_message = parsedData.message;
+
+
+                    msg = `${ donation_name } donated ${ donation_amount }${ base_currency } and left the message: ${ donation_message }`
+                    console.log(msg)
+                    // lioranboardclient.send('{"type":"MESSAGE","topic":"ExtensionTrigger","trigger":"DonationAlerts","value1":"'+donation_name+'", "value2":"'+donation_amount+'","value3":"'+donation_message+'","value4":"'+donation_currency+'"}')
+                    lioranboardclient.send('{"type":"MESSAGE","topic":"ExtensionTrigger","trigger":"DonationAlerts","value1":"", "value2":"","value3":""}')
+                    lioranboardclient.send('{"type":"MESSAGE","topic": "SetVariable", "variable": "donationAlerts_name", "value": "' + donation_name + '"}')
+                    lioranboardclient.send('{"type":"MESSAGE","topic": "SetVariable", "variable": "donationAlerts_currency", "value": "' + base_currency + '"}')
+                    lioranboardclient.send('{"type":"MESSAGE","topic": "SetVariable", "variable": "donationAlerts_message", "value": "' + donation_message + '"}')
+                    lioranboardclient.send('{"type":"MESSAGE","topic": "SetVariable", "variable": "donationAlerts_amount", "value": "' + donation_amount + '"}')
+
+                    // for tests (yellow text)
+                    lioranboardclient.send('{"type": "MESSAGE","topic": "AlertMessage", "message": "' + msg + '"}')
+                }
+            });
+            return 1;
+        }
+		[insert_over]
+		[buttons_0x1]
+activepress="0.000000"
+border_size="0.000000"
+combine="1.000000"
+type="websocketaction+pubsubaction+"
+picture=""
+text="Donation Alerts [Initialize] #(press once)"
+color="255.000000"
+group_id=""
+button_id="DA_init"
+extensiontrigger0="!transmitteralways"
+pubsubaction0="7.000000"
+pubsubqueue="0.000000"
+websocketdelay0="0.000000"
+websocketvalue8_0=""
+websocketvalue7_0=""
+websocketvalue6_0=""
+websocketvalue5_0=""
+websocketvalue4_0="true"
+websocketvalue3_0="RUB"
+websocketvalue2_0=""
+websocketvalue1_0="Donation Alerts"
+websocketaction0="71.000000"
+[buttons_0x0]
+activepress="0.000000"
+border_size="0.000000"
+combine="0.000000"
+type="websocketaction+pubsubaction+"
+picture=""
+text="Donation Alerts [Alert]"
+color="12632151.000000"
+group_id=""
+button_id="DA_test"
+extensiontrigger0="DonationAlerts"
+pubsubaction0="7.000000"
+pubsubqueue="0.000000"
+websocketdelay7="0.000000"
+websocketvalue8_7=""
+websocketvalue7_7=""
+websocketvalue6_7=""
+websocketvalue5_7=""
+websocketvalue4_7=""
+websocketvalue3_7=""
+websocketvalue2_7=""
+websocketvalue1_7="/$donationAlerts_name$/ donated more than 30  /$donationAlerts_currency$/ "
+websocketaction7="36.000000"
+websocketdelay6="0.000000"
+websocketvalue8_6=""
+websocketvalue7_6=""
+websocketvalue6_6=""
+websocketvalue5_6=""
+websocketvalue4_6="1"
+websocketvalue3_6="30"
+websocketvalue2_6="<="
+websocketvalue1_6="donationAlerts_amount_int"
+websocketaction6="23.000000"
+websocketdelay5="0.000000"
+websocketvalue8_5=""
+websocketvalue7_5=""
+websocketvalue6_5=""
+websocketvalue5_5=""
+websocketvalue4_5=""
+websocketvalue3_5=""
+websocketvalue2_5=""
+websocketvalue1_5="If the donation amout was greater than 30"
+websocketaction5="92.000000"
+websocketdelay4="0.000000"
+websocketvalue8_4=""
+websocketvalue7_4=""
+websocketvalue6_4=""
+websocketvalue5_4=""
+websocketvalue4_4=""
+websocketvalue3_4=""
+websocketvalue2_4=""
+websocketvalue1_4="/$donationAlerts_name$/ donated less than 30 /$donationAlerts_currency$/ "
+websocketaction4="36.000000"
+websocketdelay3="0.000000"
+websocketvalue8_3=""
+websocketvalue7_3=""
+websocketvalue6_3=""
+websocketvalue5_3=""
+websocketvalue4_3="1"
+websocketvalue3_3="30"
+websocketvalue2_3=">"
+websocketvalue1_3="donationAlerts_amount_int"
+websocketaction3="23.000000"
+websocketdelay2="0.000000"
+websocketvalue8_2=""
+websocketvalue7_2=""
+websocketvalue6_2=""
+websocketvalue5_2=""
+websocketvalue4_2=""
+websocketvalue3_2=""
+websocketvalue2_2=""
+websocketvalue1_2="If the donation amount was less than 30"
+websocketaction2="92.000000"
+websocketdelay1="0.000000"
+websocketvalue8_1=""
+websocketvalue7_1=""
+websocketvalue6_1=""
+websocketvalue5_1=""
+websocketvalue4_1=""
+websocketvalue3_1=""
+websocketvalue2_1="donationAlerts_amount"
+websocketvalue1_1="donationAlerts_amount_int"
+websocketaction1="54.000000"
+websocketdelay0="50.000000"
+websocketvalue8_0=""
+websocketvalue7_0=""
+websocketvalue6_0=""
+websocketvalue5_0=""
+websocketvalue4_0=""
+websocketvalue3_0=""
+websocketvalue2_0=""
+websocketvalue1_0="/$donationAlerts_name$/ just donated /$donationAlerts_amount$/ /$donationAlerts_currency$/ and said: þ/$donationAlerts_message$/þ"
+websocketaction0="36.000000"
+[configs]
+name="Donation Alerts"
+background_color="8947848.000000"
+grid_height="2.000000"
+grid_width="1.000000"
