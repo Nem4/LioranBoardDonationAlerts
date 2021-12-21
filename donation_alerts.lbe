@@ -21,7 +21,7 @@ case "DonationAlerts":{
 function LBDonationAlerts(DonationAlertsToken = '', base_currency = '', convert_currency) {
 
             //Socket token 
-            const socketToken = "RC8nnBfO8eYK7VD9e50E";
+            const socketToken = "";
             //Connect to socket
             const socket = io(`wss://socket.donationalerts.ru:443`);
             console.log("CONNECTING")
